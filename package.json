@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "drizzle-kit generate",
+  "db:migrate": "drizzle-kit migrate",
+  "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
@@ -23,6 +26,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.8",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
@@ -31,3 +35,5 @@
     "vitest": "^5.0.5"
   }
 }
+
+
