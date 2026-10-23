@@ -13,10 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CreateProductDialog } from "./create-product-dialog";
+import { AdjustStockDialog } from "./adjust-stock-dialog";
 
-async function ProductsTable() {
+async function ProductsContent() {
   await connection();
-  await requireRole("admin", "staff", "viewer");
+  const user = await requireRole("admin", "staff", "viewer");
+  const canEdit = user.role !== "viewer";
 
   const rows = await db
     .select({
@@ -35,58 +38,70 @@ async function ProductsTable() {
     .orderBy(products.name);
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>SKU</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead className="text-right">Price</TableHead>
-          <TableHead className="text-right">In stock</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.length === 0 && (
+    <>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Products</h1>
+        {canEdit && <CreateProductDialog />}
+      </div>
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell
-              colSpan={5}
-              className="text-center text-muted-foreground"
-            >
-              No products yet.
-            </TableCell>
+            <TableHead>SKU</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead className="text-right">Price</TableHead>
+            <TableHead className="text-right">In stock</TableHead>
+            <TableHead>Status</TableHead>
+            {canEdit && <TableHead />}
           </TableRow>
-        )}
-        {rows.map((p) => (
-          <TableRow key={p.id}>
-            <TableCell className="font-mono text-xs">{p.sku}</TableCell>
-            <TableCell>{p.name}</TableCell>
-            <TableCell className="text-right">
-              ${(p.priceCents / 100).toFixed(2)}
-            </TableCell>
-            <TableCell className="text-right">{p.stock}</TableCell>
-            <TableCell>
-              {p.stock <= p.reorderLevel ? (
-                <Badge variant="destructive">Low stock</Badge>
-              ) : (
-                <Badge variant="secondary">OK</Badge>
+        </TableHeader>
+        <TableBody>
+          {rows.length === 0 && (
+            <TableRow>
+              <TableCell
+                colSpan={canEdit ? 6 : 5}
+                className="text-center text-muted-foreground"
+              >
+                No products yet.
+              </TableCell>
+            </TableRow>
+          )}
+          {rows.map((p) => (
+            <TableRow key={p.id}>
+              <TableCell className="font-mono text-xs">{p.sku}</TableCell>
+              <TableCell>{p.name}</TableCell>
+              <TableCell className="text-right">
+                ${(p.priceCents / 100).toFixed(2)}
+              </TableCell>
+              <TableCell className="text-right">{p.stock}</TableCell>
+              <TableCell>
+                {p.stock <= p.reorderLevel ? (
+                  <Badge variant="destructive">Low stock</Badge>
+                ) : (
+                  <Badge variant="secondary">OK</Badge>
+                )}
+              </TableCell>
+              {canEdit && (
+                <TableCell className="text-right">
+                  <AdjustStockDialog productId={p.id} productName={p.name} />
+                </TableCell>
               )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
   );
 }
 
 export default function ProductsPage() {
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Products</h1>
       <Suspense
         fallback={<p className="text-sm text-muted-foreground">Loading...</p>}
       >
-        <ProductsTable />
+        <ProductsContent />
       </Suspense>
     </div>
+    
   );
 }
