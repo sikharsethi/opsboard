@@ -34,7 +34,7 @@ async function main() {
 
     // Opening stock, then a couple of movements so the history looks real
     const opening = reorderLevel * 3 + Math.floor(Math.random() * 40);
-    const sold = Math.floor(opening * (0.2 + Math.random() * 0.9));
+    const sold = Math.floor(opening * (0.2 + Math.random() * 0.7)); // max 90% of opening, never negative
     await db.insert(stockMovements).values([
       { productId: product.id, quantity: opening, reason: "purchase", note: "Opening stock", userId: admin.id },
       { productId: product.id, quantity: -sold, reason: "sale", note: "Recent sales", userId: admin.id },
