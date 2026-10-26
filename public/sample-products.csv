@@ -1,0 +1,5 @@
+sku,name,price,reorder_level,quantity
+IMP-001,Copper Wire 10m,14.50,10,60
+IMP-002,Cable Ties (100),3.20,20,200
+IMP-003,Drill Bit Set,24.90,5,18
+IMP-004,Duct Tape,4.75,15,90

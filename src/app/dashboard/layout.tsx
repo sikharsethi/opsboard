@@ -5,6 +5,36 @@ import { connection } from "next/server";
 import { auth } from "@/auth";
 import { signOutAction } from "./actions-auth";
 
+function BaseLinks() {
+  return (
+    <>
+      <Link href="/dashboard" className="text-sm hover:underline">
+        Dashboard
+      </Link>
+      <Link href="/dashboard/products" className="text-sm hover:underline">
+        Products
+      </Link>
+    </>
+  );
+}
+
+async function NavLinks() {
+  await connection();
+  const session = await auth();
+  const canImport = session && session.user.role !== "viewer";
+
+  return (
+    <>
+      <BaseLinks />
+      {canImport && (
+        <Link href="/dashboard/import" className="text-sm hover:underline">
+          Import
+        </Link>
+      )}
+    </>
+  );
+}
+
 async function UserMenu() {
   await connection();
   const session = await auth();
@@ -39,12 +69,9 @@ export default function DashboardLayout({
       <header className="flex items-center justify-between border-b px-6 py-3">
         <nav className="flex items-center gap-6">
           <span className="font-semibold">OpsBoard</span>
-          <Link href="/dashboard" className="text-sm hover:underline">
-            Dashboard
-          </Link>
-          <Link href="/dashboard/products" className="text-sm hover:underline">
-            Products
-          </Link>
+          <Suspense fallback={<BaseLinks />}>
+            <NavLinks />
+          </Suspense>
         </nav>
         <Suspense
           fallback={<span className="text-sm text-muted-foreground">...</span>}
