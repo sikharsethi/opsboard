@@ -20,6 +20,13 @@ const items = [
   ["BOX-091", "Carton Box 50x40", 340, 80],
 ] as const;
 
+function daysAgo(n: number) {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - n);
+  d.setUTCHours(8 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60), 0, 0);
+  return d;
+}
+
 async function main() {
   const [admin] = await db.select().from(users).where(eq(users.email, "admin@opsboard.dev"));
   if (!admin) throw new Error("Run npm run db:seed first (users are missing).");
@@ -32,15 +39,39 @@ async function main() {
       .returning();
     if (!product) continue; // already seeded
 
-    // Opening stock, then a couple of movements so the history looks real
-    const opening = reorderLevel * 3 + Math.floor(Math.random() * 40);
-    const sold = Math.floor(opening * (0.2 + Math.random() * 0.7)); // max 90% of opening, never negative
-    await db.insert(stockMovements).values([
-      { productId: product.id, quantity: opening, reason: "purchase", note: "Opening stock", userId: admin.id },
-      { productId: product.id, quantity: -sold, reason: "sale", note: "Recent sales", userId: admin.id },
-    ]);
+    const opening = reorderLevel * 4 + Math.floor(Math.random() * 60);
+    const budget = Math.floor(opening * 0.85); // never sell more than we had
+    const popularity = 0.5 + Math.random() * 1.5; // some products sell better
+    const saleCount = Math.max(4, Math.round((6 + Math.random() * 8) * popularity));
+
+    const rows: (typeof stockMovements.$inferInsert)[] = [
+      {
+        productId: product.id,
+        quantity: opening,
+        reason: "purchase",
+        note: "Opening stock",
+        userId: admin.id,
+        createdAt: daysAgo(45),
+      },
+    ];
+
+    let sold = 0;
+    for (let i = 0; i < saleCount; i++) {
+      const qty = 1 + Math.floor(Math.random() * Math.max(1, (budget / saleCount) * 2));
+      if (sold + qty > budget) break;
+      sold += qty;
+      rows.push({
+        productId: product.id,
+        quantity: -qty,
+        reason: "sale",
+        note: "Customer sale",
+        userId: admin.id,
+        createdAt: daysAgo(Math.floor(Math.random() * 30)),
+      });
+    }
+    await db.insert(stockMovements).values(rows);
   }
-  console.log("Seeded products and stock");
+  console.log("Seeded products and stock history");
   process.exit(0);
 }
 
